@@ -68,7 +68,11 @@ type FcDeleteInput struct {
 	CloudFilter *Filter
 }
 
-func (c *Client) FcDelete(fcDeleteInput *FcDeleteInput) (*FcCreateOutput, error) {
+type FcDeleteOutput struct {
+	
+}
+
+func (c *Client) FcDelete(fcDeleteInput *FcDeleteInput) (*FcDeleteOutput, error) {
 	if fcDeleteInput == nil {
 		return nil, errors.New("null pointer")
 	}
@@ -79,9 +83,7 @@ func (c *Client) FcDelete(fcDeleteInput *FcDeleteInput) (*FcCreateOutput, error)
         return nil, err
 	}
 	
-    req.Header.Add("Content-Type", writer.FormDataContentType())
-	
-    resp, err := c.hc.Do(req)
+    _, err = c.hc.Do(req)
     if err != nil {
         return nil, err
     }
