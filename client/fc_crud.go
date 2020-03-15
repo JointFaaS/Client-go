@@ -12,7 +12,6 @@ type FcCreateInput struct {
 	FuncName string
 	Code io.Reader
 	Env string
-	CloudFilter *Filter
 }
 
 type FcCreateOutput struct {
@@ -65,7 +64,6 @@ func (c *Client) FcCreate(fcCreateInput *FcCreateInput) (*FcCreateOutput, error)
 
 type FcDeleteInput struct {
 	FuncName string
-	CloudFilter *Filter
 }
 
 type FcDeleteOutput struct {
@@ -92,7 +90,6 @@ func (c *Client) FcDelete(fcDeleteInput *FcDeleteInput) (*FcDeleteOutput, error)
 }
 
 type FcListInput struct {
-	CloudFilter *Filter
 }
 
 func (c *Client) FcList() (error) {
@@ -101,7 +98,6 @@ func (c *Client) FcList() (error) {
 
 type FcGetInput struct {
 	FuncName string
-	CloudFilter *Filter
 }
 
 type FcGetOutput struct {

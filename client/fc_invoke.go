@@ -10,7 +10,6 @@ import (
 type FcInvokeInput struct {
 	FuncName    string
 	Args		[]byte
-	CloudFilter *Filter
 }
 
 type FcInvokeOutput struct {
