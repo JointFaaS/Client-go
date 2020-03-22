@@ -5,15 +5,28 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"encoding/json"
+	"encoding/base64"
 )
 
 type FcInvokeInput struct {
 	FuncName    string
 	Args		[]byte
+	EnableNative string
 }
 
 type FcInvokeOutput struct {
-	Ret []byte
+	StatusCode int
+	RespBody []byte
+}
+
+type invokeBody struct {
+	FuncName string `json:"funcName"`
+	Args     string `json:"args"`
+
+	// 'true' : may use native serverless, optimize cold-boot
+	// 'false' : prevent manager to use native serverless. avoid the limits of platform.
+	EnableNative string `json:"enableNative"`
 }
 
 func (c *Client) FcInvoke(fcInvokeInput *FcInvokeInput) (*FcInvokeOutput, error) {
@@ -21,8 +34,16 @@ func (c *Client) FcInvoke(fcInvokeInput *FcInvokeInput) (*FcInvokeOutput, error)
 		return nil, errors.New("null pointer")
 	}
 
-	url := "http://" + c.host + "/invoke?funcName=" + fcInvokeInput.FuncName
-    req, err := http.NewRequest("POST", url, bytes.NewReader(fcInvokeInput.Args))
+	body := invokeBody{
+		FuncName: fcInvokeInput.FuncName,
+		Args: base64.StdEncoding.EncodeToString(fcInvokeInput.Args),
+		EnableNative: fcInvokeInput.EnableNative,
+	}
+	buf := new(bytes.Buffer)
+	json.NewEncoder(buf).Encode(body)
+	
+	url := "http://" + c.host + "/invoke"
+    req, err := http.NewRequest("POST", url, buf)
     if err != nil {
         return nil, err
 	}
@@ -35,6 +56,7 @@ func (c *Client) FcInvoke(fcInvokeInput *FcInvokeInput) (*FcInvokeOutput, error)
 		return nil, err
 	}
 	return &FcInvokeOutput{
-		Ret: ret,
+		StatusCode: resp.StatusCode,
+		RespBody: ret,
 	}, nil
 }

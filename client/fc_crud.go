@@ -1,21 +1,35 @@
 package client
 
 import (
-	"io"
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"errors"
 )
 
 type FcCreateInput struct {
 	FuncName string
-	Code io.Reader
+	Code []byte
 	Env string
+	Timeout string
+	MemorySize string
 }
 
 type FcCreateOutput struct {
+	StatusCode int
+	RespBody []byte
+}
 
+type fcCreateBody struct {
+	FuncName string `json:"funcName"`
+	CodeZip  string `json:"codeZip"`
+	Env string `json:"env"`
+	MemorySize     string `json:"memorySize"`
+	Timeout string `json:"timeout"`
 }
 
 func (c *Client) FcCreate(fcCreateInput *FcCreateInput) (*FcCreateOutput, error) {
@@ -23,43 +37,35 @@ func (c *Client) FcCreate(fcCreateInput *FcCreateInput) (*FcCreateOutput, error)
 		return nil, errors.New("null pointer")
 	}
 
-	body := new(bytes.Buffer)
-    writer := multipart.NewWriter(body)
-    writer.WriteField("funcName", fcCreateInput.FuncName)
-	writer.WriteField("env", fcCreateInput.Env)
-
-    formFile, err := writer.CreateFormFile("sourceZip", "code.zip")
-    if err != nil {
-        return nil, err
-    }
-	_, err = io.Copy(formFile, fcCreateInput.Code)
-	if err != nil {
-		return nil, err
+	body := fcCreateBody{
+		FuncName: fcCreateInput.FuncName,
+		CodeZip: base64.StdEncoding.EncodeToString(fcCreateInput.Code),
+		Env: fcCreateInput.Env,
+		MemorySize: fcCreateInput.MemorySize,
+		Timeout: fcCreateInput.Timeout,
 	}
-
-	err = writer.Close()
-	if err != nil {
-        return nil, err
-	}
+	buf := new(bytes.Buffer)
+	json.NewEncoder(buf).Encode(body)
 	
-	url := "http://" + c.host + "/createfunction"
-    req, err := http.NewRequest("POST", url, body)
+	url := "http://" + c.host + "/create"
+    req, err := http.NewRequest("POST", url, buf)
     if err != nil {
         return nil, err
 	}
-	
-    req.Header.Add("Content-Type", writer.FormDataContentType())
 	
     resp, err := c.hc.Do(req)
     if err != nil {
         return nil, err
     }
     defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
-    return nil, nil
+    return &FcCreateOutput{
+		StatusCode: resp.StatusCode,
+		RespBody: respBody,
+	}, nil
 }
 
 type FcDeleteInput struct {
