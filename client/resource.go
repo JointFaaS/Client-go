@@ -5,5 +5,5 @@ import (
 )
 
 func (c *Client) GetResourceMetrics() (*strategy.ResourceMetrics, error) {
-	
+	return nil, nil
 }

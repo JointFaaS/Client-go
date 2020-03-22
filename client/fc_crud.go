@@ -5,9 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io"
 	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 )
 
@@ -48,7 +46,7 @@ func (c *Client) FcCreate(fcCreateInput *FcCreateInput) (*FcCreateOutput, error)
 	json.NewEncoder(buf).Encode(body)
 	
 	url := "http://" + c.host + "/create"
-    req, err := http.NewRequest("POST", url, buf)
+	req, err := http.NewRequest("POST", url, buf)
     if err != nil {
         return nil, err
 	}
@@ -73,7 +71,8 @@ type FcDeleteInput struct {
 }
 
 type FcDeleteOutput struct {
-	
+	StatusCode int
+	RespBody []byte
 }
 
 func (c *Client) FcDelete(fcDeleteInput *FcDeleteInput) (*FcDeleteOutput, error) {
@@ -87,12 +86,20 @@ func (c *Client) FcDelete(fcDeleteInput *FcDeleteInput) (*FcDeleteOutput, error)
         return nil, err
 	}
 	
-    _, err = c.hc.Do(req)
+    resp, err := c.hc.Do(req)
     if err != nil {
         return nil, err
-    }
-
-	return nil, nil
+	}
+	
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+    return &FcDeleteOutput{
+		StatusCode: resp.StatusCode,
+		RespBody: respBody,
+	}, nil
 }
 
 type FcListInput struct {
