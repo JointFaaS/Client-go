@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 )
@@ -13,7 +14,10 @@ type Client struct {
 }
 
 // NewClient 
-func NewClient(config Config) (*Client, error) {
+func NewClient(config *Config) (*Client, error) {
+	if config == nil {
+		return nil, errors.New("config is nil")
+	}
 	url, err := url.Parse(config.Host)
 	if err != nil {
 		return nil, err

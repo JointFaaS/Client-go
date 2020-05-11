@@ -39,7 +39,6 @@ func (fcf *FcFlow) AddSource(funcName string, args []byte) (error){
 }
 
 func (fcf *FcFlow) AddNode(funcName string, args []byte, inputs []*input) (error){
-	fcf.layers[]
 	return nil
 }
 
